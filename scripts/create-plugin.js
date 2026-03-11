@@ -1,0 +1,17 @@
+const fs = require('fs');
+const archiver = require('archiver');
+const path = require('path');
+
+const buildDir = path.resolve(__dirname, '../build');
+const output = fs.createWriteStream(path.resolve(__dirname, '../onlyoffice-antidote.plugin'));
+
+const archive = archiver('zip', { zlib: { level: 9 } });
+
+output.on('close', () => {
+  console.log(`${archive.pointer()} total bytes`);
+  console.log(`Plugin zip ready: onlyoffice-antidote.plugin`);
+});
+
+archive.pipe(output);
+archive.directory(buildDir, false);  // Zip entire build/
+archive.finalize();
