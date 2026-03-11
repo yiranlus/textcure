@@ -11,13 +11,13 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@main
+      uses: actions/checkout@v6
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@main
+      uses: pnpm/action-setup@v4
 
     - name: Use Node.js
-      uses: actions/setup-node@main
+      uses: actions/setup-node@v6
       with:
         node-version: '22'
         cache: 'pnpm'
@@ -39,7 +39,7 @@ jobs:
         # Or for a specific file: mv dist.zip "plugin-${VERSION}.zip"
 
     - name: Upload plugin artifact
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v6
       with:
         name: plugin-build-${{ steps.version.outputs.version }}
         path: onlyoffice-antidote-${{ steps.version.outputs.version }}.plugin
