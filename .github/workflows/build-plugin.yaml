@@ -1,4 +1,4 @@
-name: Build and Publish Plugin
+name: Build Plugin
 
 on:
   push:
@@ -32,15 +32,9 @@ jobs:
       id: version
       run: echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
 
-    - name: Rename dist with version
-      run: |
-        VERSION="${{ steps.version.outputs.version }}"
-        mv onlyoffice-antidote.plugin "onlyoffice-antidote-${VERSION}.plugin"
-        # Or for a specific file: mv dist.zip "plugin-${VERSION}.zip"
-
     - name: Upload plugin artifact
       uses: actions/upload-artifact@v6
       with:
         name: plugin-build-${{ steps.version.outputs.version }}
-        path: onlyoffice-antidote-${{ steps.version.outputs.version }}.plugin
+        path: onlyoffice-antidote.plugin
         retention-days: 30

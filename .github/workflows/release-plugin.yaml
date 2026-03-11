@@ -1,0 +1,30 @@
+name: Release Plugin
+
+on:
+  push:
+    tags: [ '*' ]  # Any tag
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-plugin.yaml@main  # Calls your existing one (@branch/tag)
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Rename with tag
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        TAG="${{ github.ref_name }}"
+        mv onlyoffice-antidote.plugin "onlyoffice-antidote-${TAG}.plugin"
+
+    - uses: softprops/action-gh-release@v2
+      with:
+        files: onlyoffice-antidote-${{ github.ref_name }}.plugin
