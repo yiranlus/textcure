@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Input dialog</title>
+  <script type="text/javascript" src="../v1/plugins.js"></script>
+  <script type="text/javascript" src="../v1/plugins-ui.js"></script>
+  <link rel="stylesheet" href="../v1/plugins.css">
+  <script type="text/javascript">
+  var inputEl;
+
+  window.Asc.plugin.init = function () {
+      console.log("Init Settings");
+      var antidotePort = localStorage.getItem("ANTIDOTE_PORT");
+
+      inputEl = document.getElementById("antidotePort");
+
+      if (inputEl) {
+          inputEl.value = antidotePort;
+          inputEl.focus();
+      }
+  };
+  window.Asc.plugin.button = function (id, windowId) {
+      if (!inputEl) {
+          inputEl = document.getElementById("antidotePort");
+      }
+      console.log("Value of input El: ", inputEl)
+      const value = inputEl ? Number(inputEl.value) : 0;
+
+
+      // Send value back to main plugin context (optional)
+      localStorage.setItem("ANTIDOTE_PORT", value);
+      console.log("Saved ANTIDOTE_PORT:", value);
+
+      // Close modal
+      // if (windowId) {
+      console.log("windowId: ", windowId);
+      window.Asc.plugin.executeCommand("close", "");
+      // }
+  };
+  </script>
+</head>
+<body>
+  <label for="antidotePort">Websocket Port:</label>
+  <input id="antidotePort" type="text" style="width: 100%;" />
+</body>
+</html>
