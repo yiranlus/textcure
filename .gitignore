@@ -148,4 +148,3 @@ vite.config.ts.timestamp-*
 
 build/
 *.plugin
-*lock*
