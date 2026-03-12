@@ -5,12 +5,19 @@ import {
   WordProcessorConfiguration,
   ParamsGetZonesToCorrect,
   TextZoneConnectix,
-  DocumentType
+  DocumentType,
+  StyleInfo,
+  TextStyle
 } from "@druide-informatique/antidote-api-js";
 
 type Segment = {
   relPos: number,
-  text: string
+  text?: string
+  readonly?: boolean,
+  bold?: boolean,
+  italic?: boolean,
+  strike?: boolean,
+  verticalAlign?: string
 }
 
 type Paragraph = {
@@ -28,6 +35,14 @@ type TextRange = {
   end: number
 }
 
+export class EmptyDataError extends Error {
+  constructor() {
+    super("Data is empty");
+    this.name = 'EmptyDataError';
+    Object.setPrototypeOf(this, EmptyDataError.prototype);
+  }
+}
+
 export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
   title: string;
   Asc: any;
@@ -35,7 +50,6 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
   paragraphs: Paragraph[] | null;
 
   constructor(Asc: any) {
-    console.log("created WordProcessorAgent");
     super();
     this.Asc = Asc;
     this.updateByAntidote = false;
@@ -51,39 +65,36 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
 
   findIndex(pos: number, eager: boolean=false): SegmentIndex {
     if (!this.paragraphs) {
-      throw new Error("No text found");
+      throw new Error("Data is empty");
     }
 
-    let i = 0, j = 0;
+    let par = 0, seg = 0;
     if (eager) {
       while (
-        i + 1 < this.paragraphs.length &&
-        this.paragraphs[i + 1].globalPos <= pos)
-          i++;
+        par + 1 < this.paragraphs.length &&
+        this.paragraphs[par + 1].globalPos <= pos)
+          par++;
         while (
-          j + 1 < this.paragraphs[i].segments.length &&
-          this.paragraphs[i].segments[j+1].relPos <= pos - this.paragraphs[i].globalPos)
-        j++;
+          seg + 1 < this.paragraphs[par].segments.length &&
+          this.paragraphs[par].segments[seg+1].relPos <= pos - this.paragraphs[par].globalPos)
+        seg++;
     } else {
       while (
-        i + 1 < this.paragraphs.length &&
-        this.paragraphs[i + 1].globalPos < pos)
-      i++;
+        par + 1 < this.paragraphs.length &&
+        this.paragraphs[par + 1].globalPos < pos)
+      par++;
       while (
-        j + 1 < this.paragraphs[i].segments.length &&
-        this.paragraphs[i].segments[j+1].relPos < pos - this.paragraphs[i].globalPos)
-      j++;
+        seg + 1 < this.paragraphs[par].segments.length &&
+        this.paragraphs[par].segments[seg+1].relPos < pos - this.paragraphs[par].globalPos)
+      seg++;
     }
 
-    return {
-      par: i,
-      seg: j,
-    }
+    return { par, seg };
   }
 
   correctIntoWordProcessor(params: ParamsReplace): boolean {
     if (!this.paragraphs) {
-      throw new Error("No text found");
+      throw new EmptyDataError();
     }
 
     this.updateByAntidote = true;
@@ -132,7 +143,7 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
       (res: {text: string, diff: number}) => {
 
         if (!this.paragraphs) {
-          throw new Error("No text found");
+          throw new EmptyDataError();
         }
 
         this.paragraphs[segmentIndex.par].segments[j].text = res.text;
@@ -161,6 +172,10 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
   }
 
   allowEdit(params: ParamsAllowEdit): boolean {
+    if (!this.paragraphs) {
+      throw new Error("No text found");
+    }
+
     let indexStart = this.findIndex(params.positionStart, true);
     let indexEnd = this.findIndex(params.positionEnd);
 
@@ -169,7 +184,8 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
 
     return (
       indexStart.par === indexEnd.par &&
-      indexStart.seg === indexEnd.seg
+      indexStart.seg === indexEnd.seg &&
+      !this.paragraphs[indexStart.par].segments[indexStart.seg].readonly
     );
   }
 
@@ -186,10 +202,30 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
       ).join("\r\n\r\n") :
       "Please wait..."
     );
+    const styleInfos: StyleInfo[] = [];
+    this.paragraphs?.forEach(paragraph =>
+      paragraph.segments.forEach(segment => {
+        const positionStart = paragraph.globalPos + segment.relPos;
+        const positionEnd = positionStart + segment.text!.length;
+
+        if (segment.bold)
+          styleInfos.push({ positionStart, positionEnd, style: TextStyle.bold });
+        if (segment.italic)
+          styleInfos.push({ positionStart, positionEnd, style: TextStyle.italic });
+        if (segment.strike)
+          styleInfos.push({ positionStart, positionEnd, style: TextStyle.strike });
+        if (segment.verticalAlign === "superscript") {
+          styleInfos.push({ positionStart, positionEnd, style: TextStyle.superscript });
+        } else if (segment.verticalAlign === "subscript") {
+          styleInfos.push({ positionStart, positionEnd, style: TextStyle.subscript });
+        }
+      })
+    );
     return [{
       text,
       zoneId: "",
       zoneIsFocused: true,
+      styleInfo: styleInfos
     }];
   }
 
@@ -211,15 +247,32 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
           for (let j = 0; j < oParagraph.GetElementsCount(); j++) {
             let oSegment = oParagraph.GetElement(j);
 
-            if (oSegment && oSegment.GetText) {
-              // console.log(oSegment);
-              // console.log("calling GetText: ", oSegment.GetText());
-              let text = oSegment.GetText();
-              segments.push({ relPos, text })
+            let segment: Segment = { relPos };
+            if (oSegment.GetClassType() === "run") {
+              const text = oSegment.GetText();
+              segment.text = text;
+              relPos += text.length;
+
+              if (oSegment.GetBold())
+                segment.bold = true;
+              if (oSegment.GetItalic())
+                segment.italic = true;
+              if (oSegment.GetStrikeout() || oSegment.GetDoubleStrikeout())
+                segment.strike = true;
+              if (oSegment.GetVertAlign() === "superscript") {
+                segment.verticalAlign = "superscript";
+              } else if (oSegment.GetVertAlign() === "subscript") {
+                segment.verticalAlign = "subscript";
+              }
+            } else if (oSegment.GetClassType() === "hyperlink") {
+              const text = oSegment.GetDisplayedText();
+              segment.text = text;
+              segment.readonly = true;
               relPos += text.length
-            } else {
-              segments.push({ relPos, text: "" })
+
+              segment.italic = true;
             }
+            segments.push(segment);
 
           }
         }
