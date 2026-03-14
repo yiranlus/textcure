@@ -34,5 +34,5 @@ window.Asc.plugin.button = (id: string, windowId: string) => {
 };
 
 window.Asc.plugin.onTranslate = () => {
-  applyTranslation(window, "lable_antidote_port", "Websocket Port:");
+  applyTranslation(window.Asc, "lable_antidote_port", "Websocket Port:");
 }

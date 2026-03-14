@@ -34,7 +34,6 @@ import { WordProcessorAgentOnlyOfficeDocument } from "./processor-agent";
 
   function getAntidotePort() {
     const antidotePort = localStorage.getItem("ANTIDOTE_PORT");
-    // console.log("antidotePort: ", antidotePort)
     if (antidotePort) {
       return Number(antidotePort);
     }
@@ -44,8 +43,6 @@ import { WordProcessorAgentOnlyOfficeDocument } from "./processor-agent";
 
   function launchCorrector() {
     AntidoteConnector.announcePresence();
-    console.log("Status of AntidoteConnector: ", AntidoteConnector.isDetected());
-
     const agent = new ConnectixAgent(
       wordProcessorAgent,
       AntidoteConnector.isDetected() ?
@@ -59,9 +56,6 @@ import { WordProcessorAgentOnlyOfficeDocument } from "./processor-agent";
         const errorDialog = new window.Asc.PluginWindow();
         errorDialog.show(connectionErrorModal);
         window.Asc.plugin.connectionErrorModalId = errorDialog.id;
-        // window.Asc.plugin.executeMethod("ShowWindow", ["connection-error-modal", connectionErrorModal]);
-
-        console.log(error)
       })
   }
 
