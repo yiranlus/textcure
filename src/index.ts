@@ -60,17 +60,19 @@ import { WordProcessorAgentOnlyOfficeDocument } from "./processor-agent";
   }
 
   window.Asc.plugin.init = () => {
-    window.Asc.plugin.attachEditorEvent("onDocumentContentReady", () => {
-      wordProcessorAgent.updateParagraphs();
-    });
+    let firstLoad = true;
+    wordProcessorAgent.updateParagraphs()
+      .then(() => {
+        firstLoad = false;
+        launchCorrector();
+      });
 
     window.Asc.plugin.attachEditorEvent("onParagraphText", (data: any) => {
-      if (!wordProcessorAgent.updatingByAntidote) {
+      if (!wordProcessorAgent.updatingByAntidote && !firstLoad) {
+        console.log("From onParagraphText", data)
         wordProcessorAgent.updateParagraphs();
       }
     });
-
-    launchCorrector();
   };
 
   window.Asc.plugin.button = (id: string, windowId: string) => {

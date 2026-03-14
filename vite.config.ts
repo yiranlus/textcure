@@ -7,7 +7,7 @@ import pkg from './package.json';
 export default defineConfig({
   base: "./",
   build: {
-    // minify: false,
+    minify: false,
     outDir: 'build',
     rollupOptions: {
       input: {

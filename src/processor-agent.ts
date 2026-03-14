@@ -52,7 +52,7 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
     super.sessionEnded();
   }
 
-  findIndex(pos: number, eager: boolean=false): number {
+  findIndex(pos: number, eager: boolean = false): number {
     if (!this.paragraphs) {
       throw new Error("Data is empty");
     }
@@ -62,56 +62,61 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
       while (
         elementIndex + 1 < this.paragraphs.length &&
         this.paragraphs[elementIndex + 1].globalPos <= pos)
-          elementIndex++;
+        elementIndex++;
     } else {
       while (
         elementIndex + 1 < this.paragraphs.length &&
         this.paragraphs[elementIndex + 1].globalPos < pos)
-      elementIndex++;
+        elementIndex++;
     }
 
     return elementIndex;
   }
 
   correctIntoWordProcessor(params: ParamsReplace): boolean {
+    if (!this.paragraphs) return false;
+
     this.mutexQueue.runExclusive(() => {
-      console.log("Locking Queue");
+      // console.log("Locking Queue");
       this.replacingQueue.push(params);
     })
-    .then(() => {
-      console.log("Calling Apply Corrections")
-      this.applyCorrections();
-    })
-    .catch(error => {
-      console.log(error);
-    })
+      .then(() => {
+        // console.log("Calling Apply Corrections")
+        this.applyCorrections();
+      })
+      .catch(error => {
+        console.log(error);
+      })
 
     return true;
   }
 
   async applyCorrections() {
-    let params = await this.mutexQueue.runExclusive(() => {
-      console.log("Retriving Item from the Queue")
-      return this.replacingQueue.shift();
-    });
+    await this.mutexDocument.runExclusive(async () => {
+      this.updatingByAntidote = true;
 
-    while (params) {
-      this.mutexDocument.runExclusive(async () => {
-        console.log("Applying a Correction")
-        await this._correctIntoWordProcessor(params!);
+      let params = await this.mutexQueue.runExclusive(() => {
+        // console.log("Retriving Item from the Queue")
+        return this.replacingQueue.shift();
       });
 
-      params = await this.mutexQueue.runExclusive(() => {
-        console.log("Retriving Item from the Queue")
-        return this.replacingQueue.shift();
-      })
-    }
+      while (params) {
+        // console.log("Applying a Correction")
+        await this._correctIntoWordProcessor(params!);
+
+        params = await this.mutexQueue.runExclusive(() => {
+          // console.log("Retriving Item from the Queue")
+          return this.replacingQueue.shift();
+        })
+      }
+
+      this.updatingByAntidote = false;
+    });
   }
 
   async _correctIntoWordProcessor(params: ParamsReplace) {
     // Waiting to previous action to finish
-    this.updatingByAntidote = true;
-    console.log("ParasReplace: ", params);
+    // console.log("ParasReplace: ", params);
 
     let elementIndex = this.findIndex(params.positionStartReplace, true);
 
@@ -120,7 +125,7 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
       text.substring(0, params.positionStartReplace - this.paragraphs![elementIndex].globalPos) +
       params.newString +
       text.substring(params.positionReplaceEnd - this.paragraphs![elementIndex].globalPos)
-      ).replace(/(\r\n)*$/, "");
+    ).replace(/(\r\n)*$/, "");
 
     this.Asc.scope.paramsReplace = { elementIndex, text: newText };
 
@@ -150,7 +155,6 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
         for (let i = elementIndex + 1; i < this.paragraphs!.length; i++) {
           this.paragraphs![i].globalPos += res.diff;
         }
-        this.updatingByAntidote = false;
         resolve();
       });
     });
@@ -168,15 +172,15 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
   }
 
   textZonesAvailable(): boolean {
+    if (this.replacingQueue.length > 0
+      && !this.mutexQueue.isLocked()
+      && !this.mutexDocument.isLocked())
+      return false;
     return !!this.paragraphs;
   }
 
   zonesToCorrect(_params: ParamsGetZonesToCorrect): TextZoneConnectix[] {
-    const text = (
-      this.paragraphs ?
-        this.paragraphs.map(el => el.text).join("\r\n\r\n") :
-      "Please wait..."
-    );
+    const text = this.paragraphs!.map(el => el.text).join("\r\n\r\n");
     return [{
       text,
       zoneId: "",
@@ -185,34 +189,45 @@ export class WordProcessorAgentOnlyOfficeDocument extends WordProcessorAgent {
   }
 
   updateParagraphs() {
+    console.log("UpdateParagraphs called.");
+    return this.mutexDocument.runExclusive(() => this._updateParagraphs());
+  }
+
+  _updateParagraphs(): Promise<void> {
+    console.log("_updateParagraphs called");
     this.paragraphs = null;
-    this.Asc.plugin.callCommand(() => {
-      const oDocument = Api.GetDocument();
-      const oDocumentInfo = oDocument.GetDocumentInfo();
-      const title = oDocumentInfo.Title;
 
-      let paragraphs: Paragraph[] = [], globalPos = 0;
-      for (let i = 0; i < oDocument.GetElementsCount(); i++) {
-        const element = oDocument.GetElement(i);
-        if (element.GetClassType() === "paragraph") {
-          const text = element.GetText({"Numbering": false}).replace(/(\r\n)*$/, "");
-          paragraphs.push({ globalPos, text });
-          globalPos += text.length;
-        } else {
-          paragraphs.push({ globalPos });
+    return new Promise<void>(resolve => {
+      this.Asc.plugin.callCommand(() => {
+        const oDocument = Api.GetDocument();
+        const oDocumentInfo = oDocument.GetDocumentInfo();
+        const title = oDocumentInfo.Title;
+
+        let paragraphs: Paragraph[] = [], globalPos = 0;
+        for (let i = 0; i < oDocument.GetElementsCount(); i++) {
+          const element = oDocument.GetElement(i);
+          if (element.GetClassType() === "paragraph") {
+            const text = element.GetText({ "Numbering": false }).replace(/(\r\n)*$/, "");
+            paragraphs.push({ globalPos, text });
+            globalPos += text.length;
+          } else {
+            paragraphs.push({ globalPos });
+          }
         }
-      }
 
-      return { title, paragraphs };
-    },
-    false,
-    false,
-    (res: {title: string, paragraphs: Paragraph[]}) => {
-      for (let i = 1; i < res.paragraphs.length; i++) {
-        res.paragraphs[i].globalPos += 4 * i;
-      }
-      this.title = res.title;
-      this.paragraphs = res.paragraphs;
+        return { title, paragraphs };
+      },
+        false,
+        false,
+        (res: { title: string, paragraphs: Paragraph[] }) => {
+          for (let i = 1; i < res.paragraphs.length; i++) {
+            res.paragraphs[i].globalPos += 4 * i;
+          }
+          this.title = res.title;
+          this.paragraphs = res.paragraphs;
+
+          resolve();
+        });
     });
   }
 }
