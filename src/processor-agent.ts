@@ -15,11 +15,6 @@ type Paragraph = {
   text?: string
 }
 
-type TextRange = {
-  start: number,
-  end: number
-}
-
 export class EmptyDataError extends Error {
   constructor() {
     super("Data is empty");
