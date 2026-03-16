@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf build && vite build && cp -r CHANGELOG.md translations resources build/",
+    "build": "rimraf build && vite build && cp -r CHANGELOG.md LICENSE NOTICE translations resources build/",
     "build:plugin": "npm run build && npm run create-plugin",
     "create-plugin": "node scripts/create-plugin.js"
   },
