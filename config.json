@@ -1,11 +1,11 @@
 {
-  "name": "Antidote",
+  "name": "TextCure",
   "guid": "asc.{D788954F-C5E5-4395-9905-B4D639FE952E}",
   "variations": [
     {
-      "description": "Improve the spelling and grammar in your texts with Druide Antidote.",
+      "description": "Improve the spelling and grammar in your texts. An unofficial plugin to Druide Antidote.",
       "descriptionLocale": {
-        "fr": "Améliorez l'orthographe et la grammaire dans vos textes avec Druide Antidote."
+        "fr": "Améliorez l'orthographe et la grammaire dans vos textes. Un plugin non-officiel à Druide Antidote."
       },
       "url": "index.html",
       "icons": [
