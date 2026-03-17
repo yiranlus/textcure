@@ -1,40 +1,38 @@
 import { applyTranslation } from "./utils";
 
 ((window, undefined) => {
-  let inputEl: HTMLInputElement | null;
+  let inputAntidotePort: HTMLInputElement | null;
+  let inputForceSetPort: HTMLInputElement | null;
 
   window.Asc.plugin.init = function () {
-    // console.log("Init Settings");
-    inputEl = document.getElementById("antidotePort") as HTMLInputElement;
+    inputAntidotePort = document.getElementById("antidotePort") as HTMLInputElement;
+    inputForceSetPort = document.getElementById("forceSetPort") as HTMLInputElement;
 
-    if (inputEl) {
+    if (inputAntidotePort) {
       const antidotePort = localStorage.getItem("ANTIDOTE_PORT");
       if (antidotePort)
-        inputEl.value = antidotePort;
-      inputEl.focus();
+        inputAntidotePort.value = antidotePort;
+    }
+    if (inputForceSetPort) {
+      const forceSetPort = localStorage.getItem("FORCE_SET_PORT");
+      if (forceSetPort === "true")
+        inputForceSetPort.checked = true;
     }
   };
 
   window.Asc.plugin.button = (id: string, windowId: string) => {
-    if (!inputEl) {
-      inputEl = document.getElementById("antidotePort") as HTMLInputElement;
-    }
-    // console.log("Value of input El: ", inputEl)
-    const value = inputEl ? Number(inputEl.value) : 0;
-
+    const antidotePort = Number(inputAntidotePort?.value);
+    const forceSetPort = inputForceSetPort?.checked;
 
     // Send value back to main plugin context (optional)
-    localStorage.setItem("ANTIDOTE_PORT", value.toString());
-    // console.log("Saved ANTIDOTE_PORT:", value);
+    localStorage.setItem("ANTIDOTE_PORT", antidotePort.toString());
+    localStorage.setItem("FORCE_SET_PORT", forceSetPort?"true":"false");
 
-    // Close modal
-    // if (windowId) {
-    // console.log("windowId: ", windowId);
     window.Asc.plugin.executeCommand("close", "");
-    // }
   };
 
   window.Asc.plugin.onTranslate = () => {
-    applyTranslation(window.Asc, "lable_antidote_port", "Websocket Port:");
+    applyTranslation(window.Asc, "lblAntidotePort", "Websocket Port:");
+    applyTranslation(window.Asc, "lblForceSetPort", "Ignore Antidote Connector");
   }
 })(window, undefined);

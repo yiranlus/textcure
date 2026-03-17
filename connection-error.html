@@ -8,20 +8,7 @@
   <script type="text/javascript" src="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js"></script>
   <script type="text/javascript" src="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins-ui.js"></script>
   <link rel="stylesheet" href="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.css">
-  <script type="module">
-  import { applyTranslation } from "./scripts/utils.ts";
-
-  window.Asc.plugin.init = () => { }
-
-  window.Asc.plugin.onTranslate = () => {
-    applyTranslation(window.Asc, "antidote-connction-error-heading", "Antidote Connection Error");
-    applyTranslation(window.Asc, "antidote-connection-error-message", "Please make sure that the port number is correct or that Antidote Connector is installed.");
-  };
-
-  // window.Asc.plugin.button = (id, windowId) => {
-  //   window.Asc.plugin.executeCommand("close", "");
-  // };
-  </script>
+  <script type="module" src="./scripts/connection-error.ts"></script>
 </head>
 <body>
   <h2 id="antidote-connection-error-heading">Antidote Connection Error</h2>

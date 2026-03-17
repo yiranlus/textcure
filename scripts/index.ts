@@ -10,6 +10,7 @@ import { WordProcessorAgentOnlyOfficeDocumentSelection } from "./processor-agent
 import { WordProcessorAgentOnlyOfficeUniversalSelection } from "./processor-agent/universal-selection";
 
 ((window, undefined) => {
+  let isInitialized = false;
   let wordProcessorAgent: WordProcessorAgentOnlyOffice | null;
 
   function getFullUrl(name: string): string {
@@ -36,6 +37,7 @@ import { WordProcessorAgentOnlyOfficeUniversalSelection } from "./processor-agen
       }
     ]
   };
+  let connectionErrorModalId: string | null;
 
   function getAntidotePort() {
     const antidotePort = localStorage.getItem("ANTIDOTE_PORT");
@@ -44,6 +46,13 @@ import { WordProcessorAgentOnlyOfficeUniversalSelection } from "./processor-agen
     }
 
     throw new Error("Antidote port is not set.")
+  }
+
+  function getForceSetPort() {
+    const forceSetPort = localStorage.getItem("FORCE_SET_PORT");
+    if (forceSetPort === "true")
+      return true;
+    return false;
   }
 
   function launchCorrector() {
@@ -55,7 +64,7 @@ import { WordProcessorAgentOnlyOfficeUniversalSelection } from "./processor-agen
 
     const agent = new ConnectixAgent(
       wordProcessorAgent!,
-      AntidoteConnector.isDetected() ?
+      (AntidoteConnector.isDetected() && !getForceSetPort())?
       AntidoteConnector.getWebSocketPort :
       async () => getAntidotePort()
     );
@@ -65,7 +74,9 @@ import { WordProcessorAgentOnlyOfficeUniversalSelection } from "./processor-agen
       .catch(error => {
         const errorDialog = new window.Asc.PluginWindow();
         errorDialog.show(connectionErrorModal);
-        window.Asc.plugin.connectionErrorModalId = errorDialog.id;
+        connectionErrorModalId = errorDialog.id;
+
+        console.log(error);
       })
   }
 
@@ -93,7 +104,6 @@ import { WordProcessorAgentOnlyOfficeUniversalSelection } from "./processor-agen
       }
     } else {
       // Otherwise, create an WordProcessorAgent instance
-
       let promise: Promise<void> | null = null;
       switch (window.Asc.plugin.info.editorType) {
         case "word":
@@ -166,10 +176,12 @@ import { WordProcessorAgentOnlyOfficeUniversalSelection } from "./processor-agen
         promise.then(() => wordProcessorAgent!.updateText()).then(launchCorrector);
       }
     }
+
+    isInitialized = true;
   };
 
   window.Asc.plugin.button = (id: string, windowId: string) => {
-    if (windowId === window.Asc.plugin.connectionErrorModalId) {
+    if (connectionErrorModalId && windowId === connectionErrorModalId) {
       window.Asc.plugin.executeCommand("close", "");
     }
   };
