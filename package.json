@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rimraf build && vite build && cp -r CHANGELOG.md LICENSE NOTICE translations resources build/",
     "build:plugin": "npm run build && npm run create-plugin",
-    "create-plugin": "node scripts/create-plugin.js"
+    "create-plugin": "node node_scripts/create-plugin.js"
   },
   "keywords": ["antidote", "onlyoffice", "plugins", "text corrector"],
   "author": "Yiran LU",
