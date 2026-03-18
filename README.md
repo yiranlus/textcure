@@ -1,4 +1,4 @@
-# onlyoffice-textcure
+# TextCure
 
 Unofficial Antidote plugin for [ONLYOFFICE](https://www.onlyoffice.com/). Powered by [@druide-informatique/antidote-api-js](https://www.jsdelivr.com/package/npm/@druide-informatique/antidote-api-js).
 
