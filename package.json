@@ -1,6 +1,6 @@
 {
   "name": "onlyoffice-textcure",
-  "version": "1.2.0",
+  "version": "2.2.0",
   "description": "Unofficial Druide Antidote plugin for OnlyOffice",
   "scripts": {
     "build": "rimraf textcure && vite build && cp -r README.md CHANGELOG.md LICENSE NOTICE translations resources textcure/",

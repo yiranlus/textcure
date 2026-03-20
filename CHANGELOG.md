@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0
+
+* refactor the code
+
 ## 1.2.0
 
 * add option "Update Delay (ms)"
