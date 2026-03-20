@@ -3,7 +3,7 @@
   "version": "2.2.0",
   "description": "Unofficial Druide Antidote plugin for OnlyOffice",
   "scripts": {
-    "build": "rimraf textcure && vite build && cp -r README.md CHANGELOG.md LICENSE NOTICE translations resources textcure/",
+    "build": "rimraf textcure && vite build && cp -r README.md CHANGELOG.md NOTICE translations resources textcure/",
     "build:plugin": "npm run build && npm run create-plugin",
     "create-plugin": "node node_scripts/create-plugin.js"
   },
