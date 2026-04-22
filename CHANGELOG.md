@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0
+
+* add automatically get port number
+
 ## 2.0.0
 
 * refactor the code
