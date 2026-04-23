@@ -13,5 +13,7 @@ output.on('close', () => {
 });
 
 archive.pipe(output);
+const resourcesDir = path.resolve(__dirname, '../resources');
 archive.directory(buildDir, false);  // Zip entire build/
+archive.directory(resourcesDir, 'resources');
 archive.finalize();
