@@ -1,5 +1,8 @@
 # TextCure
 
+> [!IMPORTANT]
+> Druide has developed their official version of Antidote plugin, you can install it using Connectix (not the one on OnlyOffice Marketplace, but they plan to take over the maintenance of the plugin). In this case, I don't plan to add any new functionality to this project and will archive this project in near future.
+
 Unofficial Antidote plugin for [ONLYOFFICE](https://www.onlyoffice.com/). Powered by [@druide-informatique/antidote-api-js](https://www.jsdelivr.com/package/npm/@druide-informatique/antidote-api-js).
 ## Requirement
 
